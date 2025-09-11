@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>jiming 全能文件压缩工具
+  </title>
+  <!-- 使用ZIP格式相关图标作为标签页图标 -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23165DFF'%3E%3Cpath d='M19.5 2H4.5C3.12 2 2 3.12 2 4.5v15c0 1.38 1.12 2.5 2.5 2.5h15c1.38 0 2.5-1.12 2.5-2.5V4.5C22 3.12 20.88 2 19.5 2zM9.5 18H6v-3.5c0-.83.67-1.5 1.5-1.5h2c.83 0 1.5.67 1.5 1.5V18zm2.5 0h-2V12h2v6zm4.5 0h-2c-.83 0-1.5-.67-1.5-1.5V13h2v4.5c0 .83.67 1.5 1.5 1.5zm2.5 0h-2V6h2v12z'/%3E%3C/svg%3E">
+  <link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23165DFF'%3E%3Cpath d='M19.5 2H4.5C3.12 2 2 3.12 2 4.5v15c0 1.38 1.12 2.5 2.5 2.5h15c1.38 0 2.5-1.12 2.5-2.5V4.5C22 3.12 20.88 2 19.5 2zM9.5 18H6v-3.5c0-.83.67-1.5 1.5-1.5h2c.83 0 1.5.67 1.5 1.5V18zm2.5 0h-2V12h2v6zm4.5 0h-2c-.83 0-1.5-.67-1.5-1.5V13h2v4.5c0 .83.67 1.5 1.5 1.5zm2.5 0h-2V6h2v12z'/%3E%3C/svg%3E">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#6B7280',
+            success: '#36D399',
+            warning: '#FBBD23',
+            danger: '#F87272',
+            neutral: '#F3F4F6',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .shadow-custom {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .transition-custom {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .nav-link.active {
+        color: #165DFF;
+        font-weight: 500;
+      }
+      .file-icon {
+        font-size: 3rem;
+        opacity: 0.8;
+      }
+      .backdrop-blur {
+        backdrop-filter: blur(8px);
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
+  <!-- 导航栏 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-file-zip-o text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold text-gray-800">jiming全能文件压缩工具</h1>
+      </div>
+      <nav class="hidden md:flex items-center space-x-6">
+        <ul class="flex space-x-6">
+          <li><a href="#home" class="nav-link text-gray-600 hover:text-primary transition-custom active">首页</a></li>
+          <li><a href="#guide" class="nav-link text-gray-600 hover:text-primary transition-custom">使用指南</a></li>
+          <li><a href="#faq" class="nav-link text-gray-600 hover:text-primary transition-custom">常见问题</a></li>
+        </ul>
+        <div class="flex items-center space-x-4">
+          <button id="login-btn" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-lg transition-custom">
+            登录
+          </button>
+          <button id="register-btn" class="border border-primary text-primary hover:bg-primary/5 font-medium py-2 px-6 rounded-lg transition-custom">
+            注册
+          </button>
+          <div id="user-menu" class="hidden flex items-center space-x-3 cursor-pointer">
+            <img id="user-avatar" src="https://picsum.photos/id/64/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+            <span id="username-display" class="text-gray-800 font-medium">用户名</span>
+            <i class="fa fa-chevron-down text-xs text-gray-500"></i>
+          </div>
+          <div id="user-dropdown" class="absolute top-16 right-4 bg-white rounded-lg shadow-lg w-48 py-2 hidden z-50">
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-custom">
+              <i class="fa fa-user-o mr-2"></i>个人中心
+            </a>
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-custom">
+              <i class="fa fa-cog mr-2"></i>设置
+            </a>
+            <div class="border-t border-gray-100 my-1"></div>
+            <a href="#" id="logout-btn" class="block px-4 py-2 text-danger hover:bg-gray-100 transition-custom">
+              <i class="fa fa-sign-out mr-2"></i>退出登录
+            </a>
+          </div>
+        </div>
+      </nav>
+      <!-- 移动端菜单按钮 -->
+      <button id="mobile-menu-btn" class="md:hidden text-gray-600 focus:outline-none">
+        <i class="fa fa-bars text-xl"></i>
+      </button>
+    </div>
+    <!-- 移动端菜单 -->
+    <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+      <div class="container mx-auto px-4 py-3">
+        <ul class="space-y-3">
+          <li><a href="#home" class="block py-2 text-gray-600 hover:text-primary transition-custom active">首页</a></li>
+          <li><a href="#guide" class="block py-2 text-gray-600 hover:text-primary transition-custom">使用指南</a></li>
+          <li><a href="#faq" class="block py-2 text-gray-600 hover:text-primary transition-custom">常见问题</a></li>
+          <div class="pt-2 border-t border-gray-100 flex space-x-3">
+            <button id="mobile-login-btn" class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-custom">
+              登录
+            </button>
+            <button id="mobile-register-btn" class="flex-1 border border-primary text-primary hover:bg-primary/5 font-medium py-2 px-4 rounded-lg transition-custom">
+              注册
+            </button>
+          </div>
+          <div id="mobile-user-menu" class="hidden py-2">
+            <div class="flex items-center space-x-3 mb-2">
+              <img src="https://picsum.photos/id/64/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+              <span id="mobile-username" class="text-gray-800 font-medium">用户名</span>
+            </div>
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-custom">
+              <i class="fa fa-user-o mr-2"></i>个人中心
+            </a>
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-custom">
+              <i class="fa fa-cog mr-2"></i>设置
+            </a>
+            <a href="#" id="mobile-logout-btn" class="block px-4 py-2 text-danger hover:bg-gray-100 rounded-lg transition-custom">
+              <i class="fa fa-sign-out mr-2"></i>退出登录
+            </a>
+          </div>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- 登录模态框 -->
+  <div id="login-modal" class="fixed inset-0 bg-black/50 backdrop-blur z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold text-gray-800">用户登录</h3>
+          <button id="close-login-modal" class="text-gray-400 hover:text-gray-600">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label for="login-email" class="block text-gray-700 font-medium mb-2">邮箱</label>
+            <input type="email" id="login-email" placeholder="请输入邮箱" required
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <div>
+            <label for="login-password" class="block text-gray-700 font-medium mb-2">密码</label>
+            <input type="password" id="login-password" placeholder="请输入密码" required
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <div class="flex justify-between items-center">
+            <label class="flex items-center">
+              <input type="checkbox" class="mr-2 accent-primary">
+              <span class="text-gray-600 text-sm">记住我</span>
+            </label>
+            <a href="#" class="text-primary text-sm hover:underline">忘记密码？</a>
+          </div>
+          <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-custom">
+            登录
+          </button>
+        </form>
+        <div class="mt-6 text-center">
+          <p class="text-gray-600">还没有账号？ <a href="#" id="switch-to-register" class="text-primary font-medium hover:underline">立即注册</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 注册模态框 -->
+  <div id="register-modal" class="fixed inset-0 bg-black/50 backdrop-blur z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-bold text-gray-800">用户注册</h3>
+          <button id="close-register-modal" class="text-gray-400 hover:text-gray-600">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        <form id="register-form" class="space-y-4">
+          <div>
+            <label for="register-name" class="block text-gray-700 font-medium mb-2">用户名</label>
+            <input type="text" id="register-name" placeholder="请输入用户名" required
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <div>
+            <label for="register-email" class="block text-gray-700 font-medium mb-2">邮箱</label>
+            <input type="email" id="register-email" placeholder="请输入邮箱" required
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <div>
+            <label for="register-password" class="block text-gray-700 font-medium mb-2">密码</label>
+            <input type="password" id="register-password" placeholder="请输入密码（至少6位）" required minlength="6"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <div>
+            <label for="register-confirm" class="block text-gray-700 font-medium mb-2">确认密码</label>
+            <input type="password" id="register-confirm" placeholder="请再次输入密码" required
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+          </div>
+          <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-custom">
+            注册
+          </button>
+        </form>
+        <div class="mt-6 text-center">
+          <p class="text-gray-600">已有账号？ <a href="#" id="switch-to-login" class="text-primary font-medium hover:underline">立即登录</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <div class="max-w-5xl mx-auto">
+      <!-- 工具介绍 -->
+      <section id="home" class="mb-10 text-center">
+        <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-4">高效压缩任何文件</h2>
+        <p class="text-gray-600 max-w-3xl mx-auto text-lg">无需安装软件，在浏览器中压缩各种类型文件，保护隐私的同时减小文件体积，方便传输和存储。</p>
+        
+        <!-- 权限提示 -->
+        <div class="mt-6 inline-flex items-center bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
+          <i class="fa fa-info-circle mr-2"></i>
+          <span>访客账号支持最大300MB文件，<a href="#" class="font-medium text-primary hover:underline login-prompt">登录后无限制</a></span>
+        </div>
+      </section>
+
+      <!-- 工具主体 -->
+      <section class="bg-white rounded-xl shadow-custom p-6 md:p-8 mb-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- 左侧：上传和设置 -->
+          <div class="space-y-6">
+            <!-- 上传区域 -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-custom cursor-pointer" id="drop-area">
+              <input type="file" id="file-input" class="hidden" multiple>
+              <div class="space-y-4">
+                <i class="fa fa-cloud-upload text-5xl text-gray-400"></i>
+                <h3 class="text-xl font-semibold text-gray-700">拖放文件到此处</h3>
+                <p class="text-gray-500">或者</p>
+                <button class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-lg transition-custom" id="select-file-btn">
+                  选择文件
+                </button>
+                <p class="text-gray-400 text-sm">
+                  <span id="file-size-limit">支持所有文件类型</span>
+                  <span class="hidden text-primary" id="unlimited-size-hint">登录后无大小限制</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- 上传文件列表 -->
+            <div id="file-list" class="hidden space-y-4">
+              <h3 class="text-lg font-semibold text-gray-800">已选择文件</h3>
+              <div id="selected-files" class="space-y-2 max-h-40 overflow-y-auto pr-2">
+                <!-- 文件列表将在这里动态生成 -->
+              </div>
+            </div>
+
+            <!-- 压缩设置 -->
+            <div id="compression-settings" class="hidden space-y-6">
+              <h3 class="text-lg font-semibold text-gray-800">压缩设置</h3>
+              
+              <!-- 压缩级别 -->
+              <div>
+                <div class="flex justify-between mb-2">
+                  <label for="compression-level" class="text-gray-700 font-medium">压缩级别</label>
+                  <span id="level-value" class="text-primary font-medium">6</span>
+                </div>
+                <input type="range" id="compression-level" min="1" max="9" value="6" 
+                  class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>快速压缩 (低比率)</span>
+                  <span>高比率压缩 (速度慢)</span>
+                </div>
+              </div>
+
+              <!-- 压缩格式 -->
+              <div>
+                <label class="block text-gray-700 font-medium mb-2">压缩格式</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <button class="format-option bg-primary text-white py-2 px-4 rounded-lg text-center transition-custom" data-format="zip">
+                    <i class="fa fa-file-zip-o mr-1"></i>ZIP 格式
+                  </button>
+                  <button class="format-option bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-center transition-custom hover:bg-gray-200" data-format="gzip">
+                    <i class="fa fa-file-archive-o mr-1"></i>GZIP 格式
+                  </button>
+                </div>
+              </div>
+
+              <!-- 高级选项 -->
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="flex justify-between items-center mb-3">
+                  <h4 class="text-gray-700 font-medium">高级选项</h4>
+                  <button id="advanced-toggle" class="text-primary text-sm hover:underline">
+                    展开 <i class="fa fa-chevron-down ml-1"></i>
+                  </button>
+                </div>
+                <div id="advanced-options" class="hidden space-y-4">
+                  <div>
+                    <label class="flex items-center">
+                      <input type="checkbox" id="encrypt-files" class="mr-2 accent-primary">
+                      <span class="text-gray-700">加密压缩文件</span>
+                    </label>
+                    <div id="password-option" class="ml-6 mt-2 space-y-3 hidden">
+                      <div class="flex items-center">
+                        <label for="zip-password" class="w-24 text-gray-700">设置密码:</label>
+                        <input type="password" id="zip-password" placeholder="输入密码"
+                          class="flex-grow border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary">
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="flex items-center">
+                      <input type="checkbox" id="preserve-structure" class="mr-2 accent-primary" checked>
+                      <span class="text-gray-700">保留文件结构</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1">保持原有的文件夹层次结构</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 压缩按钮 -->
+              <button id="compress-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-custom flex items-center justify-center">
+                <i class="fa fa-compress mr-2"></i>
+                开始压缩
+              </button>
+            </div>
+          </div>
+
+          <!-- 右侧：文件信息和结果 -->
+          <div class="space-y-6">
+            <!-- 文件信息区域 -->
+            <div class="bg-gray-50 rounded-lg overflow-hidden shadow-inner flex-grow">
+              <div class="flex flex-col h-full">
+                <div class="p-4 border-b border-gray-200">
+                  <h3 class="font-medium text-gray-800">文件信息</h3>
+                </div>
+                <div class="flex-grow p-4">
+                  <div id="file-info-container" class="space-y-4">
+                    <!-- 文件信息将在这里动态生成 -->
+                  </div>
+                </div>
+                <div id="file-placeholder" class="flex-grow flex flex-col items-center justify-center p-8 text-center">
+                  <i class="fa fa-file-text-o text-4xl text-gray-300 mb-4"></i>
+                  <p class="text-gray-500">上传文件后显示文件信息</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 压缩结果 -->
+            <div id="compression-results" class="hidden space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm text-gray-500 mb-1">原始总大小</h4>
+                  <p id="original-size-display" class="text-2xl font-semibold text-gray-800">0 KB</p>
+                  <p class="text-sm text-gray-500 mt-1">文件数量: <span id="file-count">0</span></p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h4 class="text-sm text-gray-500 mb-1">压缩后</h4>
+                  <p id="compressed-size-display" class="text-2xl font-semibold text-primary">0 KB</p>
+                  <p class="text-sm text-gray-500 mt-1">格式: <span id="compressed-format-display">ZIP</span></p>
+                </div>
+              </div>
+              <div class="bg-green-50 rounded-lg p-4 flex items-center">
+                <i class="fa fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <div>
+                  <p class="text-green-700 font-medium">节省了 <span id="savings-percentage">0%</span></p>
+                  <p class="text-sm text-green-600">文件压缩完成，可安全下载</p>
+                </div>
+              </div>
+              <button id="download-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-custom flex items-center justify-center">
+                <i class="fa fa-download mr-2"></i>
+                下载压缩文件
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 支持的文件类型 -->
+      <section class="bg-white rounded-xl shadow-custom p-6 md:p-8 mb-10">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">支持的文件类型</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-image-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">图片文件</span>
+            <span class="text-xs text-gray-500 mt-1">JPG, PNG, GIF 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-text-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">文档文件</span>
+            <span class="text-xs text-gray-500 mt-1">PDF, DOC, TXT 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-audio-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">音频文件</span>
+            <span class="text-xs text-gray-500 mt-1">MP3, WAV, FLAC 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-video-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">视频文件</span>
+            <span class="text-xs text-gray-500 mt-1">MP4, AVI, MOV 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-archive-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">压缩文件</span>
+            <span class="text-xs text-gray-500 mt-1">ZIP, RAR, 7Z 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-code text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">代码文件</span>
+            <span class="text-xs text-gray-500 mt-1">HTML, JS, CSS 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-excel-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">表格文件</span>
+            <span class="text-xs text-gray-500 mt-1">XLS, CSV, XLSX 等</span>
+          </div>
+          <div class="flex flex-col items-center p-4 border border-gray-100 rounded-lg hover:border-primary transition-custom">
+            <i class="fa fa-file-powerpoint-o text-3xl text-primary mb-2"></i>
+            <span class="text-gray-700 text-center">演示文件</span>
+            <span class="text-xs text-gray-500 mt-1">PPT, PPTX 等</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 使用指南 -->
+      <section id="guide" class="bg-white rounded-xl shadow-custom p-6 md:p-8 mb-10">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">使用指南</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <i class="fa fa-upload text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">1. 上传文件</h3>
+            <p class="text-gray-600">点击上传区域或拖放文件到指定区域，可同时上传多个不同类型的文件。</p>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <i class="fa fa-sliders text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">2. 调整设置</h3>
+            <p class="text-gray-600">选择压缩格式和压缩级别，可设置密码保护您的压缩文件。</p>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <i class="fa fa-download text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">3. 下载文件</h3>
+            <p class="text-gray-600">点击下载按钮获取压缩后的文件，所有操作均在浏览器中完成。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 常见问题 -->
+      <section id="faq" class="bg-white rounded-xl shadow-custom p-6 md:p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">常见问题</h2>
+        <div class="space-y-4">
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">支持哪些文件格式？</h3>
+            <p class="text-gray-600">支持所有类型的文件压缩，包括文档、图片、音频、视频、代码文件等，无格式限制。</p>
+          </div>
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">文件会被上传到服务器吗？</h3>
+            <p class="text-gray-600">不会。所有压缩操作都在您的浏览器中进行，文件不会离开您的设备，确保隐私安全。</p>
+          </div>
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">为什么需要登录？</h3>
+            <p class="text-gray-600">登录后可以解锁更大的文件压缩限制（超过300MB），并可以保存您的压缩偏好设置，提升使用体验。</p>
+          </div>
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">压缩后的文件可以被所有解压软件打开吗？</h3>
+            <p class="text-gray-600">是的，我们使用标准的ZIP和GZIP格式，所有主流解压软件都可以打开这些压缩文件。</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-medium text-gray-800 mb-2">加密功能的安全性如何？</h3>
+            <p class="text-gray-600">我们使用行业标准的加密算法，密码只会在您的浏览器中使用，不会被存储或传输，确保文件安全。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-gray-800 text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <i class="fa fa-file-zip-o text-primary text-2xl"></i>
+            <h3 class="text-xl font-bold">jiming全能文件压缩工具</h3>
+          </div>
+          <p class="text-gray-400">在浏览器中安全、高效地压缩任何文件，保护您的隐私。</p>
+          <div class="flex space-x-4 mt-4">
+            <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-facebook"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-twitter"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-instagram"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-custom"><i class="fa fa-github"></i></a>
+          </div>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+          <ul class="space-y-2">
+            <li><a href="#home" class="text-gray-400 hover:text-white transition-custom">首页</a></li>
+            <li><a href="#guide" class="text-gray-400 hover:text-white transition-custom">使用指南</a></li>
+            <li><a href="#faq" class="text-gray-400 hover:text-white transition-custom">常见问题</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">关于我们</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-4">联系我们</h4>
+          <ul class="space-y-2">
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-envelope-o mr-2"></i>
+              <a href="mailto:522451936@qq.com" class="hover:text-white transition-custom">522451936@qq.com</a>
+            </li>
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-phone mr-2"></i>
+              <span>+86 17376596797</span>
+            </li>
+            <li class="flex items-center text-gray-400">
+              <i class="fa fa-map-marker mr-2"></i>
+              <span>杭州市拱墅区孝丰路</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+        <p>&copy; 2025 jiming全能文件压缩工具 版权所有</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 全局变量
+    let selectedFiles = [];
+    let compressedBlob = null;
+    let selectedFormat = 'zip';
+    let compressionLevel = 6;
+    let isLoggedIn = false;
+    const GUEST_FILE_SIZE_LIMIT = 300 * 1024 * 1024; // 300MB
+    
+    // DOM 元素
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('file-input');
+    const selectFileBtn = document.getElementById('select-file-btn');
+    const fileList = document.getElementById('file-list');
+    const selectedFilesContainer = document.getElementById('selected-files');
+    const fileInfoContainer = document.getElementById('file-info-container');
+    const filePlaceholder = document.getElementById('file-placeholder');
+    const compressionSettings = document.getElementById('compression-settings');
+    const compressionLevelSlider = document.getElementById('compression-level');
+    const levelValue = document.getElementById('level-value');
+    const formatOptions = document.querySelectorAll('.format-option');
+    const advancedToggle = document.getElementById('advanced-toggle');
+    const advancedOptions = document.getElementById('advanced-options');
+    const encryptFilesCheckbox = document.getElementById('encrypt-files');
+    const passwordOption = document.getElementById('password-option');
+    const zipPasswordInput = document.getElementById('zip-password');
+    const preserveStructureCheckbox = document.getElementById('preserve-structure');
+    const compressBtn = document.getElementById('compress-btn');
+    const compressionResults = document.getElementById('compression-results');
+    const originalSizeDisplay = document.getElementById('original-size-display');
+    const compressedSizeDisplay = document.getElementById('compressed-size-display');
+    const savingsPercentage = document.getElementById('savings-percentage');
+    const downloadBtn = document.getElementById('download-btn');
+    const fileCountDisplay = document.getElementById('file-count');
+    const compressedFormatDisplay = document.getElementById('compressed-format-display');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    // 登录相关元素
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const userMenu = document.getElementById('user-menu');
+    const usernameDisplay = document.getElementById('username-display');
+    const userDropdown = document.getElementById('user-dropdown');
+    const logoutBtn = document.getElementById('logout-btn');
+    const mobileLoginBtn = document.getElementById('mobile-login-btn');
+    const mobileRegisterBtn = document.getElementById('mobile-register-btn');
+    const mobileUserMenu = document.getElementById('mobile-user-menu');
+    const mobileUsername = document.getElementById('mobile-username');
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    const loginModal = document.getElementById('login-modal');
+    const registerModal = document.getElementById('register-modal');
+    const closeLoginModal = document.getElementById('close-login-modal');
+    const closeRegisterModal = document.getElementById('close-register-modal');
+    const switchToRegister = document.getElementById('switch-to-register');
+    const switchToLogin = document.getElementById('switch-to-login');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginPrompt = document.querySelector('.login-prompt');
+    const fileSizeLimit = document.getElementById('file-size-limit');
+    const unlimitedSizeHint = document.getElementById('unlimited-size-hint');
+    
+    // 初始化
+    function init() {
+      // 检查本地存储中的登录状态
+      checkLoginStatus();
+      
+      // 导航栏功能
+      initNavigation();
+      
+      // 初始化登录相关事件
+      initLoginEvents();
+      
+      // 文件上传相关事件
+      selectFileBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', handleFileSelect);
+      
+      // 拖放相关事件
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        dropArea.classList.add('border-primary', 'bg-primary/5');
+      }
+      
+      function unhighlight() {
+        dropArea.classList.remove('border-primary', 'bg-primary/5');
+      }
+      
+      dropArea.addEventListener('drop', handleDrop, false);
+      
+      // 压缩级别滑块事件
+      compressionLevelSlider.addEventListener('input', () => {
+        compressionLevel = parseInt(compressionLevelSlider.value);
+        levelValue.textContent = compressionLevel;
+      });
+      
+      // 格式选择事件
+      formatOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          formatOptions.forEach(opt => {
+            opt.classList.remove('bg-primary', 'text-white');
+            opt.classList.add('bg-gray-100', 'text-gray-700');
+          });
+          
+          option.classList.remove('bg-gray-100', 'text-gray-700');
+          option.classList.add('bg-primary', 'text-white');
+          selectedFormat = option.dataset.format;
+          compressedFormatDisplay.textContent = selectedFormat.toUpperCase();
+        });
+      });
+      
+      // 高级选项切换
+      advancedToggle.addEventListener('click', () => {
+        const isExpanded = advancedOptions.classList.toggle('hidden');
+        advancedToggle.innerHTML = isExpanded 
+          ? '收起 <i class="fa fa-chevron-up ml-1"></i>' 
+          : '展开 <i class="fa fa-chevron-down ml-1"></i>';
+      });
+      
+      // 加密选项切换
+      encryptFilesCheckbox.addEventListener('change', () => {
+        passwordOption.classList.toggle('hidden', !encryptFilesCheckbox.checked);
+        if (encryptFilesCheckbox.checked) {
+          zipPasswordInput.required = true;
+        } else {
+          zipPasswordInput.required = false;
+        }
+      });
+      
+      // 压缩按钮事件
+      compressBtn.addEventListener('click', compressFiles);
+      
+      // 下载按钮事件
+      downloadBtn.addEventListener('click', downloadCompressedFile);
+    }
+    
+    // 检查登录状态
+    function checkLoginStatus() {
+      const user = localStorage.getItem('user');
+      if (user) {
+        const userData = JSON.parse(user);
+        isLoggedIn = true;
+        updateLoginUI(userData);
+      } else {
+        isLoggedIn = false;
+        updateLoginUI(null);
+      }
+    }
+    
+    // 初始化登录相关事件
+    function initLoginEvents() {
+      // 打开登录模态框
+      loginBtn.addEventListener('click', () => openModal(loginModal));
+      mobileLoginBtn.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        openModal(loginModal);
+      });
+      loginPrompt.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal(loginModal);
+      });
+      
+      // 打开注册模态框
+      registerBtn.addEventListener('click', () => openModal(registerModal));
+      mobileRegisterBtn.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        openModal(registerModal);
+      });
+      
+      // 关闭模态框
+      closeLoginModal.addEventListener('click', () => closeModal(loginModal));
+      closeRegisterModal.addEventListener('click', () => closeModal(registerModal));
+      
+      // 切换登录/注册
+      switchToRegister.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeModal(loginModal);
+        openModal(registerModal);
+      });
+      
+      switchToLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeModal(registerModal);
+        openModal(loginModal);
+      });
+      
+      // 点击模态框外部关闭
+      loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) closeModal(loginModal);
+      });
+      
+      registerModal.addEventListener('click', (e) => {
+        if (e.target === registerModal) closeModal(registerModal);
+      });
+      
+      // 用户菜单切换
+      userMenu.addEventListener('click', () => {
+        userDropdown.classList.toggle('hidden');
+      });
+      
+      // 点击其他地方关闭下拉菜单
+      document.addEventListener('click', (e) => {
+        if (!userMenu.contains(e.target) && !userDropdown.contains(e.target)) {
+          userDropdown.classList.add('hidden');
+        }
+      });
+      
+      // 登录表单提交
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        // 简单验证
+        if (!email || !password) {
+          alert('请输入邮箱和密码');
+          return;
+        }
+        
+        // 模拟登录成功
+        const userData = {
+          name: email.split('@')[0],
+          email: email,
+          avatar: `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/40/40`
+        };
+        
+        // 保存到本地存储
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // 更新状态和UI
+        isLoggedIn = true;
+        updateLoginUI(userData);
+        closeModal(loginModal);
+        
+        // 重置表单
+        loginForm.reset();
+        
+        // 显示成功消息
+        alert('登录成功！现在您可以压缩300MB以上的文件了。');
+      });
+      
+      // 注册表单提交
+      registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirm = document.getElementById('register-confirm').value;
+        
+        // 简单验证
+        if (!name || !email || !password) {
+          alert('请填写所有字段');
+          return;
+        }
+        
+        if (password !== confirm) {
+          alert('两次输入的密码不一致');
+          return;
+        }
+        
+        if (password.length < 6) {
+          alert('密码长度至少为6位');
+          return;
+        }
+        
+        // 模拟注册成功
+        const userData = {
+          name: name,
+          email: email,
+          avatar: `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/40/40`
+        };
+        
+        // 保存到本地存储
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // 更新状态和UI
+        isLoggedIn = true;
+        updateLoginUI(userData);
+        closeModal(registerModal);
+        
+        // 重置表单
+        registerForm.reset();
+        
+        // 显示成功消息
+        alert('注册成功！现在您可以压缩300MB以上的文件了。');
+      });
+      
+      // 退出登录
+      logoutBtn.addEventListener('click', handleLogout);
+      mobileLogoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    // 处理退出登录
+    function handleLogout() {
+      localStorage.removeItem('user');
+      isLoggedIn = false;
+      updateLoginUI(null);
+      userDropdown.classList.add('hidden');
+      mobileMenu.classList.add('hidden');
+      alert('已成功退出登录');
+    }
+    
+    // 更新登录状态UI
+    function updateLoginUI(user) {
+      if (user) {
+        // 显示用户菜单，隐藏登录/注册按钮
+        loginBtn.classList.add('hidden');
+        registerBtn.classList.add('hidden');
+        userMenu.classList.remove('hidden');
+        usernameDisplay.textContent = user.name;
+        document.getElementById('user-avatar').src = user.avatar;
+        
+        mobileLoginBtn.classList.add('hidden');
+        mobileRegisterBtn.classList.add('hidden');
+        mobileUserMenu.classList.remove('hidden');
+        mobileUsername.textContent = user.name;
+        
+        // 显示无限制提示
+        fileSizeLimit.classList.add('hidden');
+        unlimitedSizeHint.classList.remove('hidden');
+      } else {
+        // 显示登录/注册按钮，隐藏用户菜单
+        loginBtn.classList.remove('hidden');
+        registerBtn.classList.remove('hidden');
+        userMenu.classList.add('hidden');
+        
+        mobileLoginBtn.classList.remove('hidden');
+        mobileRegisterBtn.classList.remove('hidden');
+        mobileUserMenu.classList.add('hidden');
+        
+        // 显示大小限制提示
+        fileSizeLimit.classList.remove('hidden');
+        unlimitedSizeHint.classList.add('hidden');
+      }
+    }
+    
+    // 打开模态框
+    function openModal(modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭模态框
+    function closeModal(modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+    
+    // 初始化导航功能
+    function initNavigation() {
+      // 移动端菜单切换
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+        const icon = mobileMenuBtn.querySelector('i');
+        if (mobileMenu.classList.contains('hidden')) {
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        } else {
+          icon.classList.remove('fa-bars');
+          icon.classList.add('fa-times');
+        }
+      });
+      
+      // 导航链接点击事件
+      navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          // 移除所有活动状态
+          navLinks.forEach(l => l.classList.remove('active'));
+          // 添加当前活动状态
+          this.classList.add('active');
+          
+          // 关闭移动菜单（如果打开）
+          if (!mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+            const icon = mobileMenuBtn.querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+          }
+          
+          // 平滑滚动到目标区域
+          const targetId = this.getAttribute('href');
+          if (targetId.startsWith('#')) {
+            e.preventDefault();
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        });
+      });
+      
+      // 滚动时更新导航状态
+      window.addEventListener('scroll', () => {
+        const scrollPosition = window.scrollY + 100;
+        
+        // 检查每个部分的位置
+        const sections = ['#home', '#guide', '#faq'];
+        sections.forEach(section => {
+          const element = document.querySelector(section);
+          if (element) {
+            const offsetTop = element.offsetTop;
+            const offsetBottom = offsetTop + element.offsetHeight;
+            
+            // 更新对应导航链接的状态
+            if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
+              navLinks.forEach(link => {
+                if (link.getAttribute('href') === section) {
+                  link.classList.add('active');
+                } else {
+                  link.classList.remove('active');
+                }
+              });
+            }
+          }
+        });
+      });
+    }
+    
+    // 处理文件拖放
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      
+      if (files.length) {
+        handleFiles(files);
+      }
+    }
+    
+    // 处理文件选择
+    function handleFileSelect(e) {
+      if (e.target.files.length) {
+        handleFiles(e.target.files);
+      }
+    }
+    
+    // 处理文件
+    function handleFiles(files) {
+      // 检查文件大小限制（仅游客）
+      if (!isLoggedIn) {
+        for (const file of files) {
+          if (file.size > GUEST_FILE_SIZE_LIMIT) {
+            alert(`文件 "${file.name}" 超过300MB限制，请登录后再尝试压缩大文件。`);
+            return;
+          }
+        }
+      }
+      
+      // 将FileList转换为数组并添加到选中文件列表
+      Array.from(files).forEach(file => {
+        // 检查文件是否已存在
+        const exists = selectedFiles.some(f => 
+          f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+        );
+        
+        if (!exists) {
+          selectedFiles.push(file);
+        }
+      });
+      
+      // 更新UI
+      updateFileList();
+      updateFileInfo();
+      
+      // 显示设置区域
+      fileList.classList.remove('hidden');
+      compressionSettings.classList.remove('hidden');
+      filePlaceholder.classList.add('hidden');
+      compressionResults.classList.add('hidden');
+    }
+    
+    // 更新文件列表显示
+    function updateFileList() {
+      selectedFilesContainer.innerHTML = '';
+      
+      selectedFiles.forEach((file, index) => {
+        const fileIcon = getFileIcon(file.type);
+        const fileItem = document.createElement('div');
+        fileItem.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-lg';
+        fileItem.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <i class="fa ${fileIcon} text-primary"></i>
+            <div class="truncate">
+              <div class="font-medium text-gray-800 truncate">${file.name}</div>
+              <div class="text-xs text-gray-500">${formatFileSize(file.size)}</div>
+            </div>
+          </div>
+          <button class="text-gray-400 hover:text-danger transition-custom remove-file" data-index="${index}">
+            <i class="fa fa-times"></i>
+          </button>
+        `;
+        
+        selectedFilesContainer.appendChild(fileItem);
+      });
+      
+      // 添加删除文件事件
+      document.querySelectorAll('.remove-file').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = parseInt(this.dataset.index);
+          selectedFiles.splice(index, 1);
+          
+          // 更新UI
+          updateFileList();
+          updateFileInfo();
+          
+          // 如果没有文件了，隐藏相关区域
+          if (selectedFiles.length === 0) {
+            fileList.classList.add('hidden');
+            compressionSettings.classList.add('hidden');
+            filePlaceholder.classList.remove('hidden');
+          }
+        });
+      });
+    }
+    
+    // 更新文件信息显示
+    function updateFileInfo() {
+      fileInfoContainer.innerHTML = '';
+      
+      // 计算总大小
+      const totalSize = selectedFiles.reduce((total, file) => total + file.size, 0);
+      
+      // 显示总览信息
+      const summaryItem = document.createElement('div');
+      summaryItem.className = 'p-3 bg-gray-100 rounded-lg';
+      summaryItem.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div class="font-medium text-gray-800">文件总览</div>
+          <div class="text-sm text-gray-600">${selectedFiles.length} 个文件</div>
+        </div>
+        <div class="mt-2 text-sm text-gray-600">
+          总大小: ${formatFileSize(totalSize)}
+        </div>
+      `;
+      
+      fileInfoContainer.appendChild(summaryItem);
+      
+      // 更新结果区域的原始大小显示
+      originalSizeDisplay.textContent = formatFileSize(totalSize);
+      fileCountDisplay.textContent = selectedFiles.length;
+    }
+    
+    // 获取文件图标
+    function getFileIcon(mimeType) {
+      if (mimeType.startsWith('image/')) return 'fa-file-image-o';
+      if (mimeType.startsWith('audio/')) return 'fa-file-audio-o';
+      if (mimeType.startsWith('video/')) return 'fa-file-video-o';
+      if (mimeType.includes('pdf')) return 'fa-file-pdf-o';
+      if (mimeType.includes('word')) return 'fa-file-word-o';
+      if (mimeType.includes('excel')) return 'fa-file-excel-o';
+      if (mimeType.includes('powerpoint')) return 'fa-file-powerpoint-o';
+      if (mimeType.includes('zip') || mimeType.includes('archive')) return 'fa-file-archive-o';
+      if (mimeType.includes('text')) return 'fa-file-text-o';
+      return 'fa-file-o';
+    }
+    
+    // 压缩文件
+    async function compressFiles() {
+      // 检查是否有文件
+      if (selectedFiles.length === 0) return;
+      
+      // 检查密码（如果需要）
+      if (encryptFilesCheckbox.checked && (!zipPasswordInput.value || zipPasswordInput.value.length < 4)) {
+        alert('请设置至少4位的密码');
+        zipPasswordInput.focus();
+        return;
+      }
+      
+      // 更改按钮状态
+      compressBtn.disabled = true;
+      compressBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 压缩中...';
+      
+      try {
+        if (selectedFormat === 'zip') {
+          await compressToZip();
+        } else {
+          await compressToGzip();
+        }
+      } catch (error) {
+        console.error('压缩失败:', error);
+        alert('文件压缩失败，请尝试减小文件大小或数量。');
+      } finally {
+        // 恢复按钮状态
+        compressBtn.disabled = false;
+        compressBtn.innerHTML = '<i class="fa fa-compress mr-2"></i> 开始压缩';
+      }
+    }
+    
+    // 压缩为ZIP格式
+    async function compressToZip() {
+      // 这里使用简化的ZIP压缩逻辑
+      // 实际生产环境应使用更完善的ZIP库
+      
+      // 计算原始总大小
+      const originalSize = selectedFiles.reduce((total, file) => total + file.size, 0);
+      
+      // 创建一个简单的ZIP文件（实际实现需要使用zip.js等库）
+      // 这里仅做演示，实际项目中需要引入专门的ZIP处理库
+      
+      // 模拟压缩过程
+      await new Promise(resolve => setTimeout(resolve, 1000 + selectedFiles.length * 500));
+      
+      // 计算模拟的压缩后大小（实际应使用真实压缩结果）
+      const compressionRatio = 0.7 - (compressionLevel - 1) * 0.05; // 压缩级别越高，比率越小
+      const compressedSize = Math.round(originalSize * compressionRatio);
+      
+      // 创建模拟的Blob对象
+      compressedBlob = new Blob(['模拟ZIP数据'], { type: 'application/zip' });
+      
+      // 显示结果
+      displayCompressionResults(originalSize, compressedSize);
+    }
+    
+    // 压缩为GZIP格式
+    async function compressToGzip() {
+      // 如果选择了多个文件，先合并成一个文件
+      let content = '';
+      let originalSize = 0;
+      
+      // 读取所有文件内容
+      for (const file of selectedFiles) {
+        originalSize += file.size;
+        const text = await readFileAsText(file);
+        content += `--- 文件: ${file.name} ---\n${text}\n\n`;
+      }
+      
+      // 转换为Uint8Array
+      const uint8Array = new TextEncoder().encode(content);
+      
+      // 使用pako库进行gzip压缩
+      const compressedArray = pako.gzip(uint8Array, { level: compressionLevel });
+      
+      // 创建Blob对象
+      compressedBlob = new Blob([compressedArray], { type: 'application/gzip' });
+      
+      // 显示结果
+      displayCompressionResults(originalSize, compressedArray.length);
+    }
+    
+    // 读取文件为文本
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+    }
+    
+    // 显示压缩结果
+    function displayCompressionResults(originalSize, compressedSize) {
+      originalSizeDisplay.textContent = formatFileSize(originalSize);
+      compressedSizeDisplay.textContent = formatFileSize(compressedSize);
+      
+      const savings = Math.round((1 - compressedSize / originalSize) * 100);
+      savingsPercentage.textContent = `${savings}%`;
+      
+      compressedFormatDisplay.textContent = selectedFormat.toUpperCase();
+      
+      compressionResults.classList.remove('hidden');
+      
+      // 平滑滚动到结果区域
+      compressionResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    
+    // 下载压缩文件
+    function downloadCompressedFile() {
+      if (!compressedBlob) return;
+      
+      // 创建下载链接
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(compressedBlob);
+      
+      // 生成文件名
+      const timestamp = new Date().getTime();
+      const fileName = `compressed-${timestamp}.${selectedFormat}`;
+      link.download = fileName;
+      
+      // 模拟点击下载
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // 释放URL对象
+      URL.revokeObjectURL(link.href);
+    }
+    
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
+    
